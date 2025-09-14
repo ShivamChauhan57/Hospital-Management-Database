@@ -1,0 +1,79 @@
+-- Stored Procedures & Functions
+-- 1: Updates patient phone number if different from current
+-- has updates, conditional statements, accepts parameters
+CREATE OR REPLACE PROCEDURE update_patient_phone(
+    p_patient_id INT,
+    p_new_phone VARCHAR(15)
+AS $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM patient WHERE patientid = p_patient_id) THEN
+        RAISE NOTICE 'Patient % does not exist', p_patient_id;
+    ELSE
+        UPDATE patient 
+        SET phonenumber = p_new_phone
+        WHERE patientid = p_patient_id AND phonenumber <> p_new_phone;
+        
+        IF NOT FOUND THEN
+            RAISE NOTICE 'Phone number already matches for patient %', p_patient_id;
+        ELSE
+            RAISE NOTICE 'Updated phone for patient %', p_patient_id;
+        END IF;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 2: Counts prescriptions for a medication
+-- has data retrieval, accepts and returns parameters, processes data by counting
+CREATE OR REPLACE FUNCTION count_prescriptions(
+    p_medication_id INT)
+RETURNS INT
+AS $$
+DECLARE
+    v_count INT;
+BEGIN
+    SELECT COUNT(*) INTO v_count
+    FROM prescription
+    WHERE medicationid = p_medication_id;
+    
+    RETURN v_count;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 3: Adds new medication if it doesn't exist
+-- has insert operation, conditional check
+CREATE OR REPLACE PROCEDURE add_medication(
+    p_id INT,
+    p_name VARCHAR(100),
+    p_type VARCHAR(50),
+    p_manufacturer VARCHAR(100),
+    p_expirydate DATE,
+    p_price DECIMAL(10,2))
+AS $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM medication WHERE medicationid = p_id) THEN
+        RAISE EXCEPTION 'Medication ID % already exists', p_id;
+    ELSE
+        INSERT INTO medication (medicationid, medicationname, medicationtype, manufacturer, expirydate, price)
+        VALUES (p_id, p_name, p_type, p_manufacturer, p_expirydate, p_price);
+        RAISE NOTICE 'Added new medication: %', p_name;
+    END IF;
+END;
+$$ LANGUAGE plpgsql; 
+
+
+-- 4: Calculates total invoice amount for a patient
+-- processes data, accepts and returns parameters, data retrieval
+CREATE OR REPLACE FUNCTION get_patient_invoice_total(
+    p_patient_id INT)
+RETURNS DECIMAL(10,2)
+AS $$
+DECLARE
+    v_total DECIMAL(10,2);
+BEGIN
+    SELECT COALESCE(SUM(invoiceamount), 0) INTO v_total
+    FROM invoice
+    WHERE patientid = p_patient_id;
+    
+    RETURN v_total;
+END;
+$$ LANGUAGE plpgsql;

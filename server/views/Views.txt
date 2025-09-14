@@ -1,0 +1,61 @@
+-- View 1: Patient Prescription Counts
+-- Purpose: Provides a summary of how many prescriptions each patient has received.
+-- Includes patients with zero prescriptions by using a LEFT JOIN.
+CREATE OR REPLACE VIEW view_patient_prescription_counts AS
+SELECT 
+    p.patientid,
+    p.patientfirstname || ' ' || p.patientlastname AS fullname,
+    COUNT(pr.prescriptionid) AS total_prescriptions
+FROM 
+    patient p
+LEFT JOIN 
+    prescription pr ON p.patientid = pr.patientid
+GROUP BY 
+    p.patientid, p.patientfirstname, p.patientlastname;
+
+-- View 2: Patients With High Invoice Amounts
+-- Purpose: Lists all patients who have invoice records greater than the average invoice amount.
+-- Helps in identifying high-paying patients for financial reporting or follow-up.
+CREATE OR REPLACE VIEW view_high_invoice_patients AS
+SELECT 
+    i.invoiceid,
+    i.invoiceamount,
+    i.invoicedate,
+    p.patientfirstname || ' ' || p.patientlastname AS fullname
+FROM 
+    invoice i
+JOIN 
+    patient p ON i.patientid = p.patientid
+WHERE 
+    i.invoiceamount > (
+        SELECT AVG(invoiceamount) FROM invoice
+    );
+
+-- View 3: Top Prescribing Staff
+-- Purpose: Lists staff members who have written 3 or more prescriptions.
+-- Useful for analyzing staff workload or performance in prescribing medications.
+CREATE OR REPLACE VIEW view_top_prescribing_staff AS
+SELECT 
+    s.staffid,
+    s.stafffirstname || ' ' || s.stafflastname AS fullname,
+    COUNT(pr.prescriptionid) AS prescriptions_written
+FROM 
+    staff s
+JOIN 
+    prescription pr ON s.staffid = pr.staffid
+GROUP BY 
+    s.staffid, s.stafffirstname, s.stafflastname
+HAVING 
+    COUNT(pr.prescriptionid) >= 3;
+
+-- View 4: Basic Patient Contact Info (Updatable View)
+-- Purpose: Simplifies access to patient contact details for UI display or quick lookups.
+-- This view is updatable because it references a single table without joins or aggregates.
+CREATE OR REPLACE VIEW view_basic_patient_info AS
+SELECT 
+    patientid,
+    patientfirstname,
+    patientlastname,
+    phonenumber
+FROM 
+    patient;

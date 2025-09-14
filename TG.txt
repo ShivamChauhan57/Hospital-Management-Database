@@ -1,0 +1,72 @@
+--TRIGGER FUNCTIONS
+
+-- Trigger function on INSERT (Patient)
+CREATE OR REPLACE FUNCTION log_new_patient()
+RETURNS TRIGGER AS $$
+BEGIN
+    RAISE NOTICE 'New patient added: % %', NEW.PatientFirstName, NEW.PatientLastName;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger
+CREATE TRIGGER trg_patient_insert
+AFTER INSERT ON PATIENT
+FOR EACH ROW
+EXECUTE FUNCTION log_new_patient();
+
+
+-- Trigger function on DELETE (Equipment)
+CREATE OR REPLACE FUNCTION log_equipment_delete()
+RETURNS TRIGGER AS $$
+BEGIN
+    RAISE NOTICE 'Equipment deleted: ID=%, Name=%', OLD.EquipmentID, OLD.EquipmentName;
+    RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger
+CREATE TRIGGER trg_equipment_delete
+AFTER DELETE ON EQUIPMENT
+FOR EACH ROW
+EXECUTE FUNCTION log_equipment_delete();
+
+
+-- Trigger function on UPDATE (Staff)
+CREATE OR REPLACE FUNCTION log_staff_update()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.StaffFirstName <> OLD.StaffFirstName OR NEW.StaffLastName <> OLD.StaffLastName THEN
+        RAISE NOTICE 'Staff name updated from % % to % %', OLD.StaffFirstName, OLD.StaffLastName, NEW.StaffFirstName, NEW.StaffLastName;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger
+CREATE TRIGGER trg_staff_name_update
+AFTER UPDATE ON STAFF
+FOR EACH ROW
+EXECUTE FUNCTION log_staff_update();
+
+
+
+-- Trigger function FOR EACH ROW (Medication)
+CREATE OR REPLACE FUNCTION prevent_expired_medication()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.ExpiryDate < CURRENT_DATE THEN
+        RAISE EXCEPTION 'Cannot insert medication with past expiry date: %', NEW.ExpiryDate;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger
+CREATE TRIGGER trg_check_expiry
+BEFORE INSERT ON MEDICATION
+FOR EACH ROW
+EXECUTE FUNCTION prevent_expired_medication();
+
+
+
