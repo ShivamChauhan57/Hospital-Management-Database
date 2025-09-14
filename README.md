@@ -21,24 +21,6 @@ A full-stack CRUD application for managing hospital data. Built with a modern Re
 
 ---
 
-## 📂 Project Structure
-Hospital-Management-System/
-│── frontend/ # React + Tailwind CSS UI
-│ ├── components/ # UI components
-│ └── pages/ # Frontend pages
-│
-│── backend/ # PostgreSQL scripts and SQL queries
-│ ├── schema.sql # Table creation & ER model
-│ ├── procedures/ # Stored procedures
-│ └── queries/ # Complex SQL queries
-│
-│── README.md # Documentation
-
-yaml
-Copy code
-
----
-
 ## ⚙️ Setup Instructions
 
 ### 1. Clone the Repository
